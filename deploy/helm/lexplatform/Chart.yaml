@@ -1,0 +1,27 @@
+apiVersion: v2
+name: lexplatform
+description: LexPlatform — юридический маркетплейс (Symfony 7 + Next.js). ТЗ §13.2 архитектура 100K+.
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords: [legal, marketplace, symfony, nextjs]
+
+# Инфраструктурные зависимости (Bitnami). Каждую можно отключить
+# (postgresql.enabled=false и т.д.) и указать внешний managed-сервис в values.
+dependencies:
+  - name: postgresql
+    version: "15.x.x"
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
+  - name: redis
+    version: "20.x.x"
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled
+  - name: rabbitmq
+    version: "14.x.x"
+    repository: https://charts.bitnami.com/bitnami
+    condition: rabbitmq.enabled
+  - name: opensearch
+    version: "2.x.x"
+    repository: https://opensearch-project.github.io/helm-charts
+    condition: opensearch.enabled

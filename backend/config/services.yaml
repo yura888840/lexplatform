@@ -1,0 +1,24 @@
+parameters:
+    app.opensearch_url: '%env(OPENSEARCH_URL)%'
+    # ── Бизнес-правила Content Policy ──
+    app.commission_rate: 0.30        # «забираємо 30%» с платежей клиентов юристам
+    app.min_article_chars: 3600      # «мінімум 2 сторінки» ≈ 2 × 1800 знаков
+    app.article_cadence_days: 2      # «бажано через день»
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/Kernel.php'
+            - '../src/Domain/*/Entity/'
+            - '../src/Domain/*/ValueObject/'
+            - '../src/Domain/*/Event/'
+            - '../src/Application/*/Command/*/*Command.php'
+
+    App\Infrastructure\Search\OpenSearchClientFactory: ~
+    OpenSearch\Client:
+        factory: ['@App\Infrastructure\Search\OpenSearchClientFactory', 'create']

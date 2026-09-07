@@ -1,0 +1,34 @@
+doctrine:
+    dbal:
+        url: '%env(resolve:DATABASE_URL)%'
+        use_savepoints: true
+    orm:
+        auto_generate_proxy_classes: true
+        enable_lazy_ghost_objects: true
+        naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
+        auto_mapping: true
+        mappings:
+            Identity:
+                type: attribute
+                dir: '%kernel.project_dir%/src/Domain/Identity/Entity'
+                prefix: 'App\Domain\Identity\Entity'
+            Lawyer:
+                type: attribute
+                dir: '%kernel.project_dir%/src/Domain/Lawyer/Entity'
+                prefix: 'App\Domain\Lawyer\Entity'
+            Consultation:
+                type: attribute
+                dir: '%kernel.project_dir%/src/Domain/Consultation/Entity'
+                prefix: 'App\Domain\Consultation\Entity'
+            Content:
+                type: attribute
+                dir: '%kernel.project_dir%/src/Domain/Content/Entity'
+                prefix: 'App\Domain\Content\Entity'
+            Payment:
+                type: attribute
+                dir: '%kernel.project_dir%/src/Domain/Payment/Entity'
+                prefix: 'App\Domain\Payment\Entity'
+            LegalBase:
+                type: attribute
+                dir: '%kernel.project_dir%/src/Domain/LegalBase/Entity'
+                prefix: 'App\Domain\LegalBase\Entity'

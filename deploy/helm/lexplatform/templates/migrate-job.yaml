@@ -1,0 +1,42 @@
+{{- if .Values.migrations.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "lexplatform.fullname" . }}-migrate-{{ .Release.Revision }}
+  labels: {{- include "lexplatform.labels" . | nindent 4 }}
+  annotations:
+    # Выполняется ПОСЛЕ установки сервисов БД, ДО переключения трафика на новые поды
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 3
+  activeDeadlineSeconds: 600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: migrate
+    spec:
+      restartPolicy: Never
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: migrate
+          image: "{{ .Values.image.registry }}/{{ .Values.image.backend.repository }}:{{ .Values.image.backend.tag }}"
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
+              {{- if .Values.migrations.seedLegalBase }}
+              php bin/console app:seed-legal-base || true
+              {{- end }}
+              php bin/console app:search-reindex || true
+          env: {{- include "lexplatform.backendEnv" . | nindent 12 }}
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits: { cpu: 500m, memory: 512Mi }
+{{- end }}

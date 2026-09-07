@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "lexplatform.fullname" . }}-compliance
+  labels: {{- include "lexplatform.labels" . | nindent 4 }}
+spec:
+  schedule: "15 3 * * *"   # ежедневно 03:15 — пересчёт «статьи или деньги»
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 900
+      template:
+        spec:
+          restartPolicy: Never
+          {{- with .Values.image.pullSecrets }}
+          imagePullSecrets: {{- toYaml . | nindent 12 }}
+          {{- end }}
+          containers:
+            - name: compliance
+              image: "{{ .Values.image.registry }}/{{ .Values.image.backend.repository }}:{{ .Values.image.backend.tag }}"
+              command: ["php", "bin/console", "app:compliance-recheck"]
+              env: {{- include "lexplatform.backendEnv" . | nindent 16 }}
+              resources:
+                requests: { cpu: 100m, memory: 256Mi }
+                limits: { cpu: 500m, memory: 512Mi }

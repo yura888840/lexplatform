@@ -1,0 +1,51 @@
+security:
+    password_hashers:
+        App\Domain\Identity\Entity\User: 'auto'
+
+    providers:
+        app_users:
+            entity:
+                class: App\Domain\Identity\Entity\User
+                property: email
+
+    firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+        api_webhooks:
+            pattern: ^/api/v1/payments/webhook/
+            stateless: true
+            security: false
+        api_auth:
+            pattern: ^/api/v1/auth/(register|login|refresh)$
+            stateless: true
+            security: false
+        api:
+            pattern: ^/api
+            stateless: true
+            jwt: ~
+
+    access_control:
+        - { path: '^/api/v1/auth/(register|login|refresh)$', roles: PUBLIC_ACCESS }
+        - { path: ^/api/docs, roles: PUBLIC_ACCESS }
+        - { path: ^/api/v1/lawyers, roles: PUBLIC_ACCESS, methods: [GET] }
+        - { path: ^/api/v1/questions, roles: PUBLIC_ACCESS, methods: [GET] }
+        - { path: ^/api/v1/articles, roles: PUBLIC_ACCESS, methods: [GET] }
+        - { path: ^/api/v1/categories, roles: PUBLIC_ACCESS, methods: [GET] }
+        - { path: ^/api/v1/search, roles: PUBLIC_ACCESS, methods: [GET] }
+        - { path: ^/api/v1/laws, roles: PUBLIC_ACCESS, methods: [GET] }
+        - { path: ^/api/v1/court-decisions, roles: PUBLIC_ACCESS, methods: [GET] }
+        - { path: ^/api/v1/subscriptions/plans, roles: PUBLIC_ACCESS, methods: [GET] }
+        - { path: ^/api/v1/payments/webhook, roles: PUBLIC_ACCESS }
+        - { path: ^/api/v1/admin/reviews, roles: ROLE_MODERATOR }
+        - { path: ^/api/v1/admin/documents, roles: ROLE_MODERATOR }
+        - { path: ^/api/v1/admin/lawyers, roles: ROLE_MODERATOR }
+        - { path: ^/api/v1/admin, roles: ROLE_ADMIN }
+        - { path: ^/api/v1/editor, roles: ROLE_EDITOR }
+        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
+
+    role_hierarchy:
+        ROLE_MODERATOR: [ROLE_USER]
+        ROLE_EDITOR: [ROLE_USER]
+        ROLE_ADMIN: [ROLE_MODERATOR, ROLE_EDITOR]
+        ROLE_SUPERADMIN: [ROLE_ADMIN]

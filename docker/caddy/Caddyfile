@@ -1,0 +1,30 @@
+# {$STAGING_DOMAIN} підставляється з env (напр. staging.lexplatform.ua).
+# Caddy сам отримує сертифікат Let's Encrypt і продовжує його.
+{$STAGING_DOMAIN} {
+	encode zstd gzip
+
+	# API → nginx → php-fpm
+	handle /api/* {
+		reverse_proxy nginx:80
+	}
+
+	# Публічні медіафайли (аватари тощо) → MinIO.
+	# /media/avatars/x.jpg  →  minio:9000/lex-media/avatars/x.jpg
+	handle_path /media/* {
+		rewrite * /{$S3_BUCKET}{uri}
+		reverse_proxy minio:9000
+	}
+
+	# Усе інше → Next.js standalone
+	handle {
+		reverse_proxy node:3000
+	}
+
+	# Базовий захист заголовками
+	header {
+		Strict-Transport-Security "max-age=31536000;"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		-Server
+	}
+}

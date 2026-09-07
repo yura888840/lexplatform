@@ -1,0 +1,119 @@
+# ═══════════════════════════════════════════════════════════════════════
+# LexPlatform Helm values (дефолты = staging-профиль)
+# Прод: helm install lex . -f values.yaml -f values-prod.yaml
+# ═══════════════════════════════════════════════════════════════════════
+
+image:
+  registry: ghcr.io/lexplatform
+  backend:
+    repository: backend        # php-fpm образ с запечённым кодом
+    tag: "latest"
+  frontend:
+    repository: frontend       # next standalone
+    tag: "latest"
+  nginx:
+    repository: nginx-backend  # nginx с конфигом под fpm (или стандартный nginx + наш configmap)
+    tag: "latest"
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+
+appEnv: prod
+publicUrl: https://lexplatform.example.com
+
+backend:
+  replicaCount: 2
+  resources:
+    requests: { cpu: 250m, memory: 384Mi }
+    limits: { cpu: "1", memory: 768Mi }
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+
+worker:
+  replicaCount: 2
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits: { cpu: 500m, memory: 512Mi }
+
+frontend:
+  replicaCount: 2
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits: { cpu: 500m, memory: 512Mi }
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 8
+    targetCPUUtilizationPercentage: 70
+
+ingress:
+  enabled: true
+  className: nginx
+  host: lexplatform.example.com
+  tls:
+    enabled: true
+    secretName: lexplatform-tls          # cert-manager: annotations ниже
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: 25m
+
+# ── Секреты ──────────────────────────────────────────────────────────
+# Вариант 1 (простой): задать здесь / через --set — попадут в Secret чарта.
+# Вариант 2 (прод): existingSecret с теми же ключами (см. templates/secret.yaml),
+#                   создаётся ExternalSecrets/SealedSecrets — тогда блок ниже игнорируется.
+secrets:
+  existingSecret: ""
+  appSecret: "change-me"
+  jwtPassphrase: "change-me"
+  liqpayPublicKey: "sandbox_public_key"
+  liqpayPrivateKey: "sandbox_private_key"
+  databasePassword: "lex_secret"
+  rabbitmqPassword: "lex_secret"
+
+# ── Инфраструктура (Bitnami subcharts) ───────────────────────────────
+postgresql:
+  enabled: true
+  auth:
+    username: lex
+    database: lexplatform
+    existingSecret: ""             # или secret с ключом password
+    password: "lex_secret"
+  primary:
+    persistence: { size: 20Gi }
+  # Внешняя БД (RDS/CloudSQL): enabled: false + указать external ниже
+external:
+  databaseHost: ""                 # используется если postgresql.enabled=false
+  databasePort: 5432
+  redisUrl: ""                     # если redis.enabled=false
+  amqpUrl: ""                      # если rabbitmq.enabled=false
+  opensearchUrl: ""                # если opensearch.enabled=false
+  s3Endpoint: ""                   # MinIO/S3 всегда внешний в K8s-профиле
+  s3Bucket: lex-media
+
+redis:
+  enabled: true
+  architecture: standalone
+  auth: { enabled: false }
+
+rabbitmq:
+  enabled: true
+  auth:
+    username: lex
+    existingPasswordSecret: ""
+    password: "lex_secret"
+
+opensearch:
+  enabled: true
+  singleNode: true
+  config:
+    opensearch.yml: |
+      plugins.security.disabled: true
+
+mailer:
+  dsn: "smtp://mailer:1025"        # прод: smtp://apikey:KEY@smtp.sendgrid.net:587
+
+migrations:
+  enabled: true                    # Job-хук на install/upgrade
+  seedLegalBase: true

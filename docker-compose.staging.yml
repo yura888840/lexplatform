@@ -1,0 +1,116 @@
+# Staging overlay для VPS-тесту.
+# Запуск: docker compose -f docker-compose.yml -f docker-compose.staging.yml up -d --build
+#
+# Відмінності від dev:
+#  • app/worker/node збираються з prod-Dockerfile (код запечено в образ, без volume)
+#  • frontend працює як next standalone (node server.js), не npm dev
+#  • Caddy термінує HTTPS (авто-Let's Encrypt) і проксує / → frontend, /api → nginx
+#  • dev-інструменти (adminer/mailhog) вимкнено
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/php-prod/Dockerfile
+    image: lexplatform/app:staging
+    restart: unless-stopped
+    volumes: []            # код усередині образу
+    environment:
+      APP_ENV: prod
+      MAILER_DSN: ${MAILER_DSN:-null://null}
+      # Публічна адреса медіа: браузер відкриває аватари через Caddy (/media), а не minio:9000
+      S3_PUBLIC_URL: ${APP_PUBLIC_URL}/media
+      APP_DEBUG_ERRORS: ${APP_DEBUG_ERRORS:-1}
+      # Дозволяємо CORS з публічного домену (на випадок прямих запитів до API).
+      # При відносному /api/v1 запити same-origin і CORS не спрацьовує взагалі.
+      CORS_ALLOW_ORIGIN: ${CORS_ALLOW_ORIGIN:-^https://.*$}
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/php-prod/Dockerfile
+    image: lexplatform/app:staging
+    restart: unless-stopped
+    volumes: []
+    environment:
+      APP_ENV: prod
+      MAILER_DSN: ${MAILER_DSN:-null://null}
+
+  node:
+    build:
+      context: .
+      dockerfile: docker/node-prod/Dockerfile
+    image: lexplatform/frontend:staging
+    restart: unless-stopped
+    command: ["node", "server.js"]
+    volumes: []
+    environment:
+      NODE_ENV: production
+      # SSR (рендер на сервері) ходить у внутрішній nginx docker-мережі.
+      # Браузер використовує відносний /api/v1 (той самий домен через Caddy),
+      # тому NEXT_PUBLIC_API_URL тут НЕ потрібен — він все одно вшивається на етапі build,
+      # а не рантайму. Відносний шлях працює на будь-якому домені без пересборки.
+      API_INTERNAL_URL: "http://nginx/api/v1"
+
+  nginx:
+    restart: unless-stopped
+    # порт 8080 назовні не публікуємо — доступ лише через Caddy
+    ports: []
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on: [nginx, node]
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      STAGING_DOMAIN: ${STAGING_DOMAIN}
+      S3_BUCKET: ${S3_BUCKET:-lex-media}
+
+  postgres:
+    restart: unless-stopped
+  redis:
+    restart: unless-stopped
+  opensearch:
+    restart: unless-stopped
+  rabbitmq:
+    restart: unless-stopped
+  minio:
+    restart: unless-stopped
+
+  # Одноразова ініціалізація MinIO: створює бакет і відкриває папки avatars/ на читання.
+  # Запускається після старту MinIO, налаштовує й завершується.
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_started
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set lex http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD}; do
+        echo 'Чекаємо на MinIO...'; sleep 2;
+      done;
+      mc mb --ignore-existing lex/$${S3_BUCKET};
+      mc anonymous set download lex/$${S3_BUCKET}/avatars;
+      echo 'MinIO ініціалізовано: бакет $${S3_BUCKET}, публічні avatars/';
+      exit 0;
+      "
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-lexminio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-lexminio_secret}
+      S3_BUCKET: ${S3_BUCKET:-lex-media}
+    restart: "no"
+
+  # dev-інструменти вимкнено на staging
+  adminer:
+    profiles: ["disabled"]
+  mailhog:
+    profiles: ["disabled"]
+
+volumes:
+  caddy_data:
+  caddy_config:

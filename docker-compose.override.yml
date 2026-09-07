@@ -1,0 +1,25 @@
+# DEV override — підхоплюється АВТОМАТИЧНО при `docker compose up` (без -f).
+# Монтує вихідний код для hot-reload і запускає dev-режими.
+# На staging/prod цей файл НЕ використовується (там явні -f ... -f docker-compose.staging.yml).
+services:
+  app:
+    volumes:
+      - ./backend:/var/www/backend
+
+  worker:
+    volumes:
+      - ./backend:/var/www/backend
+
+  node:
+    build:
+      context: ./docker/node
+    command: ["sh", "-c", "npm install && npm run dev"]
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - node_modules_dev:/app/node_modules
+    ports:
+      - "3000:3000"
+
+volumes:
+  node_modules_dev:

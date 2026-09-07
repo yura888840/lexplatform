@@ -1,0 +1,31 @@
+# Прод-оверлей: managed-сервисы вместо subcharts (ТЗ §13.2: 100K+)
+appEnv: prod
+publicUrl: https://lexplatform.ua
+
+backend:
+  replicaCount: 4
+  autoscaling: { enabled: true, minReplicas: 4, maxReplicas: 20 }
+worker:
+  replicaCount: 4
+frontend:
+  replicaCount: 3
+
+postgresql: { enabled: false }
+redis: { enabled: false }
+rabbitmq: { enabled: false }
+opensearch: { enabled: false }
+
+external:
+  databaseHost: lex-prod.cluster-xyz.eu-central-1.rds.amazonaws.com
+  databasePort: 5432
+  redisUrl: redis://lex-prod.cache.amazonaws.com:6379
+  amqpUrl: amqps://lex:PASSWORD@rabbitmq.prod.internal:5671/%2f/messages
+  opensearchUrl: https://search.prod.internal:9200
+  s3Endpoint: https://s3.eu-central-1.amazonaws.com
+  s3Bucket: lex-media-prod
+
+secrets:
+  existingSecret: lexplatform-secrets   # ExternalSecrets → AWS Secrets Manager
+
+mailer:
+  dsn: "smtp://apikey:%SENDGRID_KEY%@smtp.sendgrid.net:587"

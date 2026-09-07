@@ -1,0 +1,48 @@
+# Production overlay: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Секреты — через .env на сервере или secrets manager. TLS терминируется на Cloudflare/LB.
+version: "3.9"
+
+services:
+  app:
+    restart: unless-stopped
+    environment:
+      APP_ENV: prod
+      APP_DEBUG: "0"
+    volumes: []          # код запечён в образ на этапе CI (COPY backend /var/www/backend)
+
+  worker:
+    restart: unless-stopped
+    deploy:
+      replicas: 2
+    environment:
+      APP_ENV: prod
+
+  node:
+    restart: unless-stopped
+    command: ["node", "server.js"]   # next build --output standalone
+    environment:
+      NODE_ENV: production
+
+  nginx:
+    restart: unless-stopped
+    ports:
+      - "80:80"
+
+  # В prod убираем dev-инструменты
+  mailhog:
+    deploy:
+      replicas: 0
+  adminer:
+    deploy:
+      replicas: 0
+
+  postgres:
+    restart: unless-stopped
+  redis:
+    restart: unless-stopped
+  opensearch:
+    restart: unless-stopped
+  rabbitmq:
+    restart: unless-stopped
+  minio:
+    restart: unless-stopped

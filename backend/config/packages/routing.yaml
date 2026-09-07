@@ -1,0 +1,7 @@
+framework:
+    router:
+        utf8: true
+        # Базовий URI для генерації абсолютних посилань поза HTTP-контекстом
+        # (рендер помилок за проксі, CLI, листи). Прив'язано до вже наявної APP_PUBLIC_URL,
+        # тому окрема змінна DEFAULT_URI не потрібна.
+        default_uri: '%env(APP_PUBLIC_URL)%'
