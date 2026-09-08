@@ -199,6 +199,7 @@ final class LawyerCabinetController extends ApiController
         );
     }
 
+    /** @return array<string, mixed> */
     private function complianceReport(LawyerProfile $lawyer): array
     {
         $covered = $this->specializationsCovered($lawyer);

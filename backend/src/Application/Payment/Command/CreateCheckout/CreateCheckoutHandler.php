@@ -47,7 +47,8 @@ final readonly class CreateCheckoutHandler
         return ['payment_id' => $payment->getId()->toRfc4122(), 'order_id' => $payment->getOrderId()] + $checkout;
     }
 
-    /** @return array{0:string,1:string,2:array} */
+    /** @return array{0:string,1:string,2:array<string, mixed>}
+     */
     private function forSubscription(?string $planSlug): array
     {
         $plan = $this->em->getRepository(SubscriptionPlan::class)
@@ -64,7 +65,7 @@ final readonly class CreateCheckoutHandler
     /**
      * Клиент оплачивает консультацию юриста. Комиссия площадки 30% удерживается
      * при успешной оплате (Payout создаёт PaymentSucceededHandler).
-     * @return array{0:string,1:string,2:array}
+     * @return array{0:string,1:string,2:array<string, mixed>}
      */
     private function forConsultation(?string $lawyerSlug, ?int $hours): array
     {
@@ -82,7 +83,8 @@ final readonly class CreateCheckoutHandler
         ];
     }
 
-    /** @return array{0:string,1:string,2:array} */
+    /** @return array{0:string,1:string,2:array<string, mixed>}
+     */
     private function forFeatured(User $user, ?int $days): array
     {
         $lawyer = $this->em->getRepository(LawyerProfile::class)->findOneBy(['user' => $user])

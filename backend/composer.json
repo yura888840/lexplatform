@@ -1,6 +1,6 @@
 {
     "name": "lexplatform/backend",
-    "description": "LexPlatform — юридический маркетплейс. Symfony 7 / PHP 8.4 / DDD+CQRS",
+    "description": "LexPlatform \u2014 \u044e\u0440\u0438\u0434\u0438\u0447\u0435\u0441\u043a\u0438\u0439 \u043c\u0430\u0440\u043a\u0435\u0442\u043f\u043b\u0435\u0439\u0441. Symfony 7 / PHP 8.4 / DDD+CQRS",
     "type": "project",
     "license": "proprietary",
     "minimum-stability": "stable",
@@ -16,31 +16,33 @@
         "lexik/jwt-authentication-bundle": "^3.1",
         "nelmio/cors-bundle": "^2.5",
         "opensearch-project/opensearch-php": "^2.3",
-        "php": ">=8.3",
-        "symfony/amqp-messenger": "7.2.*",
-        "symfony/console": "7.2.*",
-        "symfony/dotenv": "7.2.*",
+        "php": ">=8.4",
+        "symfony/amqp-messenger": "7.4.*",
+        "symfony/console": "7.4.*",
+        "symfony/dotenv": "7.4.*",
         "symfony/flex": "^2",
-        "symfony/framework-bundle": "7.2.*",
-        "symfony/mailer": "7.2.*",
-        "symfony/messenger": "7.2.*",
+        "symfony/framework-bundle": "7.4.*",
+        "symfony/mailer": "7.4.*",
+        "symfony/messenger": "7.4.*",
         "symfony/monolog-bundle": "^3.10",
-        "symfony/rate-limiter": "7.2.*",
-        "symfony/runtime": "7.2.*",
-        "symfony/security-bundle": "7.2.*",
-        "symfony/serializer": "7.2.*",
-        "symfony/string": "7.2.*",
-        "symfony/twig-bundle": "7.2.*",
-        "symfony/uid": "7.2.*",
-        "symfony/validator": "7.2.*",
-        "symfony/yaml": "7.2.*"
+        "symfony/rate-limiter": "7.4.*",
+        "symfony/runtime": "7.4.*",
+        "symfony/security-bundle": "7.4.*",
+        "symfony/serializer": "7.4.*",
+        "symfony/string": "7.4.*",
+        "symfony/twig-bundle": "7.4.*",
+        "symfony/uid": "7.4.*",
+        "symfony/validator": "7.4.*",
+        "symfony/yaml": "7.4.*",
+        "symfony/doctrine-messenger": "7.4.*"
     },
     "require-dev": {
         "phpstan/phpstan": "^2.0",
+        "phpstan/phpstan-doctrine": "^2.0",
         "phpunit/phpunit": "^11.4",
-        "symfony/browser-kit": "7.2.*",
+        "symfony/browser-kit": "7.4.*",
         "symfony/maker-bundle": "^1.61",
-        "symfony/phpunit-bridge": "7.2.*"
+        "symfony/phpunit-bridge": "7.4.*"
     },
     "config": {
         "allow-plugins": {
@@ -48,7 +50,10 @@
             "symfony/flex": true,
             "symfony/runtime": true
         },
-        "sort-packages": true
+        "sort-packages": true,
+        "platform": {
+            "php": "8.4.0"
+        }
     },
     "autoload": {
         "psr-4": {
@@ -62,7 +67,8 @@
     },
     "scripts": {
         "auto-scripts": {
-            "cache:clear": "symfony-cmd"
+            "cache:clear": "symfony-cmd",
+            "assets:install %PUBLIC_DIR%": "symfony-cmd"
         },
         "post-install-cmd": [
             "@auto-scripts"
@@ -74,7 +80,7 @@
     "extra": {
         "symfony": {
             "allow-contrib": false,
-            "require": "7.2.*"
+            "require": "7.4.*"
         }
     }
 }

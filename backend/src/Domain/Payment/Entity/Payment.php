@@ -53,7 +53,9 @@ class Payment
     #[ORM\Column(name: 'gateway_tx_id', length: 100, nullable: true)]
     private ?string $gatewayTxId = null;
 
-    /** Полезная нагрузка: plan_id, lawyer_id и т.п. */
+    /** Полезная нагрузка: plan_id, lawyer_id и т.п.
+     * @var array<string, mixed>
+     */
     #[ORM\Column(type: Types::JSON)]
     private array $metadata = [];
 
@@ -63,6 +65,7 @@ class Payment
     #[ORM\Column(name: 'paid_at', type: Types::DATETIME_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $paidAt = null;
 
+    /** @param array<string, mixed> $metadata */
     public function __construct(User $user, string $amount, string $type, array $metadata = [], string $currency = 'UAH')
     {
         if ((float) $amount <= 0) {
@@ -85,6 +88,7 @@ class Payment
     public function getCurrency(): string { return $this->currency; }
     public function getType(): string { return $this->type; }
     public function getStatus(): string { return $this->status; }
+    /** @return array<string, mixed> */
     public function getMetadata(): array { return $this->metadata; }
     public function getCreatedAt(): \DateTimeImmutable { return $this->createdAt; }
     public function getPaidAt(): ?\DateTimeImmutable { return $this->paidAt; }

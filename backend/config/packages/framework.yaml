@@ -4,6 +4,7 @@ framework:
     handle_all_throwables: true
     php_errors: { log: true }
     session: { enabled: false }
+    property_info: { with_constructor_extractor: true }
     serializer: { enabled: true }
     validation: { email_validation_mode: html5 }
     rate_limiter:
@@ -15,3 +16,7 @@ framework:
             policy: sliding_window
             limit: 1000
             interval: '60 minutes'
+
+when@test:
+    framework:
+        test: true

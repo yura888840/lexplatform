@@ -8,6 +8,8 @@ on:
 jobs:
   backend:
     name: Backend (PHP 8.4)
+    env:
+      APP_ENV: test
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -25,23 +27,32 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
-          extensions: intl, pdo_pgsql, amqp, redis, zip
+          extensions: intl, pdo_pgsql, pdo_sqlite, amqp, redis, zip, sodium
           coverage: none
       - name: Install dependencies
         working-directory: backend
         run: composer install --no-interaction --prefer-dist
+      - name: Validate dependency lock
+        working-directory: backend
+        run: composer validate --strict
+      - name: Migrate test database
+        working-directory: backend
+        run: php bin/console doctrine:migrations:migrate --no-interaction
+      - name: Boot container
+        working-directory: backend
+        run: php bin/console lint:container
       - name: Lint
         working-directory: backend
         run: |
           find src tests -name '*.php' -print0 | xargs -0 -n1 php -l
       - name: PHPStan
         working-directory: backend
-        run: vendor/bin/phpstan analyse src --level=6 --no-progress
+        run: vendor/bin/phpstan analyse src --level=6 --no-progress --memory-limit=1G
       - name: PHPUnit
         working-directory: backend
         env:
           DATABASE_URL: "postgresql://lex:lex_secret@127.0.0.1:5432/lexplatform_test?serverVersion=16"
-        run: php bin/phpunit
+        run: vendor/bin/phpunit
 
   frontend:
     name: Frontend (Next.js)
@@ -52,10 +63,10 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: frontend/package.json
+          cache-dependency-path: frontend/package-lock.json
       - name: Install
         working-directory: frontend
-        run: npm install
+        run: npm ci
       - name: Lint
         working-directory: frontend
         run: npm run lint
@@ -72,7 +83,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build images
-        run: docker compose build
+        run: |
+          docker build -f docker/php-prod/Dockerfile -t lexplatform-backend:ci .
+          docker build -f docker/node-prod/Dockerfile -t lexplatform-frontend:ci .
 
   release-images:
     name: Push K8s images (on tag)

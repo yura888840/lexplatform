@@ -104,6 +104,7 @@ class Article
     #[ORM\PreUpdate]
     public function touch(): void { $this->updatedAt = new \DateTimeImmutable(); }
 
+    public function getCreatedAt(): \DateTimeImmutable { return $this->createdAt; }
     public function getId(): Uuid { return $this->id; }
     public function getType(): string { return $this->type; }
     public function getTitle(): string { return $this->title; }

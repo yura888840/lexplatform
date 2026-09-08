@@ -63,6 +63,7 @@ final class ArticleController extends ApiController
         ]);
     }
 
+    /** @return array<string, mixed> */
     private function toSummary(Article $a): array
     {
         return [

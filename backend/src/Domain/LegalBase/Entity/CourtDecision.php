@@ -33,7 +33,9 @@ class CourtDecision
     #[ORM\Column(name: 'decided_at', type: Types::DATE_IMMUTABLE)]
     private \DateTimeImmutable $decidedAt;
 
-    /** Слаги правовых категорий (JSONB). */
+    /** Слаги правовых категорий (JSONB).
+     * @var list<string>
+     */
     #[ORM\Column(type: Types::JSON)]
     private array $categories = [];
 
@@ -43,6 +45,7 @@ class CourtDecision
     #[ORM\Column(name: 'created_at', type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
+    /** @param list<string> $categories */
     public function __construct(Court $court, string $caseNumber, string $title, string $body, \DateTimeImmutable $decidedAt, array $categories = [])
     {
         $this->id = Uuid::v7();
@@ -61,6 +64,7 @@ class CourtDecision
     public function getTitle(): string { return $this->title; }
     public function getBody(): string { return $this->body; }
     public function getDecidedAt(): \DateTimeImmutable { return $this->decidedAt; }
+    /** @return list<string> */
     public function getCategories(): array { return $this->categories; }
     public function getViewsCount(): int { return $this->viewsCount; }
     public function registerView(): void { $this->viewsCount++; }

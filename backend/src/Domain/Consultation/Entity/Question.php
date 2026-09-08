@@ -76,6 +76,7 @@ class Question
     public function __construct(User $author, string $title, string $body, Category $category, string $type = self::TYPE_PUBLIC, bool $isAnonymous = false)
     {
         $this->id = Uuid::v7();
+        $this->answers = new ArrayCollection();
         $this->author = $author;
         $this->title = $title;
         $this->body = $body;

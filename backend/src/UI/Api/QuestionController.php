@@ -158,6 +158,7 @@ final class QuestionController extends ApiController
         }
     }
 
+    /** @return array<string, mixed> */
     private function toSummary(Question $q): array
     {
         return [

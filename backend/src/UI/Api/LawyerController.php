@@ -93,6 +93,7 @@ final class LawyerController extends ApiController
         ]);
     }
 
+    /** @return array<string, mixed> */
     private function toCard(LawyerProfile $l): array
     {
         return [

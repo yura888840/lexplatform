@@ -11,8 +11,9 @@ RUN { echo "opcache.enable=1"; echo "opcache.memory_consumption=256"; \
       echo "upload_max_filesize=25M"; echo "post_max_size=25M"; } > /usr/local/etc/php/conf.d/lex.ini
 
 FROM base AS build
+ENV COMPOSER_ALLOW_SUPERUSER=1
 WORKDIR /var/www/backend
-COPY backend/composer.json ./
+COPY backend/composer.json backend/composer.lock ./
 RUN composer install --no-dev --no-scripts --no-interaction --prefer-dist
 COPY backend/ ./
 RUN composer dump-autoload --optimize --no-dev

@@ -32,12 +32,14 @@ class SubscriptionPlan
     #[ORM\Column(length: 10)]
     private string $interval = 'month';
 
+    /** @var list<string> */
     #[ORM\Column(type: Types::JSON)]
     private array $features = [];
 
     #[ORM\Column(name: 'is_active')]
     private bool $isActive = true;
 
+    /** @param list<string> $features */
     public function __construct(string $name, string $slug, string $price, string $interval = 'month', array $features = [])
     {
         $this->id = Uuid::v7();
@@ -54,6 +56,7 @@ class SubscriptionPlan
     public function getPrice(): string { return $this->price; }
     public function getCurrency(): string { return $this->currency; }
     public function getInterval(): string { return $this->interval; }
+    /** @return list<string> */
     public function getFeatures(): array { return $this->features; }
     public function isActive(): bool { return $this->isActive; }
     public function periodDays(): int { return $this->interval === 'year' ? 365 : 30; }

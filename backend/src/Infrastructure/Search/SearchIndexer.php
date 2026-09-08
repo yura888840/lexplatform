@@ -106,7 +106,9 @@ final readonly class SearchIndexer
         ]);
     }
 
-    /** Глобальный поиск по всем индексам (SRCH-01). */
+    /** Глобальный поиск по всем индексам (SRCH-01).
+     * @return array<string, mixed>
+     */
     public function search(string $query, string $type = 'all', int $page = 1, int $perPage = 20): array
     {
         $indices = match ($type) {
