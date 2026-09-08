@@ -17,6 +17,7 @@ services:
             - '../src/Domain/*/Entity/'
             - '../src/Domain/*/ValueObject/'
             - '../src/Domain/*/Event/'
+            - '../src/Application/*/Event/'
             - '../src/Application/*/Command/*/*Command.php'
 
     App\Infrastructure\Search\OpenSearchClientFactory: ~

@@ -78,16 +78,4 @@ final class S3Storage
         return $uri;
     }
 
-    private function ensureBucket(): void
-    {
-        // Бакет створюється minio-init на старті. Тут — м'яка перевірка без падіння,
-        // якщо прав на HeadBucket немає (MinIO інколи кидає виняток замість false).
-        try {
-            if (!$this->client()->doesBucketExist($this->bucket)) {
-                $this->client()->createBucket(['Bucket' => $this->bucket]);
-            }
-        } catch (\Throwable) {
-            // ігноруємо: якщо бакет уже є або немає прав — putObject все одно спрацює/впаде явно
-        }
-    }
 }

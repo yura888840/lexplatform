@@ -1,8 +1,8 @@
 # Frontend prod-образ (staging/K8s): next build → standalone server.js
 FROM node:20-alpine AS build
 WORKDIR /app
-COPY frontend/package.json ./
-RUN npm install
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
 COPY frontend/ ./
 ENV NEXT_TELEMETRY_DISABLED=1
 # output:'standalone' у next.config.js генерує .next/standalone/server.js

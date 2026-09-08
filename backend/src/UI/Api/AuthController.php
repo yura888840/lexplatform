@@ -111,7 +111,9 @@ final class AuthController extends ApiController
         ]);
     }
 
-    /** access 15 мин + refresh 30 дней (ТЗ AUTH-05). */
+    /** access 15 мин + refresh 30 дней (ТЗ AUTH-05).
+     * @return array<string, mixed>
+     */
     private function tokenPayload(User $user): array
     {
         $plainRefresh = bin2hex(random_bytes(32));

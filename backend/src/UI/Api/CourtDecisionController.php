@@ -61,7 +61,7 @@ final class CourtDecisionController extends ApiController
              FROM court_decisions d JOIN courts c ON c.id = d.court_id
              WHERE $whereSql ORDER BY $order LIMIT :limit OFFSET :offset",
             $params + ['limit' => $perPage, 'offset' => ($page - 1) * $perPage],
-            ['limit' => \PDO::PARAM_INT, 'offset' => \PDO::PARAM_INT]
+            ['limit' => \Doctrine\DBAL\ParameterType::INTEGER, 'offset' => \Doctrine\DBAL\ParameterType::INTEGER]
         );
 
         return $this->paginated(array_map(static fn (array $r) => [

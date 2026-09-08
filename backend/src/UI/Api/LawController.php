@@ -67,7 +67,7 @@ final class LawController extends ApiController
             "SELECT id, type, number, slug, title, issued_by, issued_at, status, version, is_pro_only, views_count, $rankSelect
              FROM law_documents WHERE $whereSql ORDER BY $order LIMIT :limit OFFSET :offset",
             $params + ['limit' => $perPage, 'offset' => ($page - 1) * $perPage],
-            ['limit' => \PDO::PARAM_INT, 'offset' => \PDO::PARAM_INT]
+            ['limit' => \Doctrine\DBAL\ParameterType::INTEGER, 'offset' => \Doctrine\DBAL\ParameterType::INTEGER]
         );
 
         return $this->paginated(array_map(static fn (array $r) => [

@@ -1,4 +1,6 @@
-.env
+/.env
+/backend/.env.local
+/backend/.env.*.local
 /backend/vendor/
 /backend/var/
 /backend/config/jwt/*.pem
@@ -9,3 +11,6 @@
 .vscode/
 *.log
 .DS_Store
+
+/backend/.phpunit.result.cache
+/backend/.phpunit.cache/

@@ -9,6 +9,7 @@ use Symfony\Component\HttpFoundation\Request;
 
 abstract class ApiController extends AbstractController
 {
+    /** @return array<string, mixed> */
     protected function jsonBody(Request $request): array
     {
         try {
@@ -28,6 +29,7 @@ abstract class ApiController extends AbstractController
         );
     }
 
+    /** @param array<array-key, mixed> $items */
     protected function paginated(array $items, int $total, int $page, int $perPage): JsonResponse
     {
         return $this->json([
