@@ -28,6 +28,7 @@ final class SearchReindexCommand extends Command
     {
         try {
             $this->indexer->createIndices();
+            $this->indexer->purgeNonPublicQuestions();
         } catch (\Throwable $e) {
             $output->writeln('<error>OpenSearch недоступен: ' . $e->getMessage() . '</error>');
             return Command::FAILURE;

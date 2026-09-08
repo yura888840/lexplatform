@@ -27,6 +27,8 @@ class Question
     public const STATUS_ARCHIVED = 'archived';
     public const STATUS_MODERATION = 'moderation';
 
+    public const PUBLIC_STATUSES = [self::STATUS_OPEN, self::STATUS_ANSWERED, self::STATUS_CLOSED];
+
     #[ORM\Id]
     #[ORM\Column(type: 'uuid')]
     private Uuid $id;
@@ -75,8 +77,11 @@ class Question
 
     public function __construct(User $author, string $title, string $body, Category $category, string $type = self::TYPE_PUBLIC, bool $isAnonymous = false)
     {
-        $this->id = Uuid::v7();
+        if (!in_array($type, [self::TYPE_PUBLIC, self::TYPE_PRIVATE, self::TYPE_PAID], true)) {
+            throw new \DomainException('Недопустимый тип вопроса.');
+        }
         $this->answers = new ArrayCollection();
+        $this->id = Uuid::v7();
         $this->author = $author;
         $this->title = $title;
         $this->body = $body;
@@ -105,6 +110,17 @@ class Question
     public function getCreatedAt(): \DateTimeImmutable { return $this->createdAt; }
     /** @return Collection<int, Answer> */
     public function getAnswers(): Collection { return $this->answers; }
+
+    public function isPubliclyVisible(): bool
+    {
+        return $this->type === self::TYPE_PUBLIC && in_array($this->status, self::PUBLIC_STATUSES, true);
+    }
+
+    public function canBeReadBy(?User $viewer): bool
+    {
+        return $this->isPubliclyVisible()
+            || ($viewer !== null && $viewer->getId()->equals($this->author->getId()));
+    }
 
     public function registerAnswer(): void
     {
