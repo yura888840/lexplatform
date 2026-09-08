@@ -33,8 +33,8 @@ final class QuestionController extends ApiController
             ->from(Question::class, 'q')
             ->join('q.category', 'c')
             ->where('q.type = :public')->setParameter('public', Question::TYPE_PUBLIC)
-            ->andWhere('q.status != :mod')->setParameter('mod', Question::STATUS_MODERATION)
-            ->orderBy('q.createdAt', 'DESC');
+            ->andWhere('q.status IN (:visible)')->setParameter('visible', Question::PUBLIC_STATUSES)
+            ->orderBy('q.createdAt', 'DESC')->addOrderBy('q.id', 'DESC');
 
         if ($cat = $request->query->get('category')) {
             $qb->andWhere('c.slug = :cat')->setParameter('cat', $cat);
@@ -81,7 +81,8 @@ final class QuestionController extends ApiController
     public function show(string $id): JsonResponse
     {
         $question = $this->find($id);
-        if (!$question) {
+        $viewer = $this->getUser();
+        if (!$question || !$question->canBeReadBy($viewer instanceof User ? $viewer : null)) {
             return $this->problem('Вопрос не найден.', Response::HTTP_NOT_FOUND);
         }
 
@@ -108,7 +109,9 @@ final class QuestionController extends ApiController
     public function answer(string $id, Request $request): JsonResponse
     {
         $question = $this->find($id);
-        if (!$question) {
+        // Private consultations have no participant/assignment model yet.
+        // Do not grant access merely because the caller registered as a lawyer.
+        if (!$question || !$question->isPubliclyVisible()) {
             return $this->problem('Вопрос не найден.', Response::HTTP_NOT_FOUND);
         }
         /** @var User $user */

@@ -34,12 +34,9 @@ final readonly class SearchIndexer
 
         foreach ([
             self::IDX_LAWYERS => ['name' => 't', 'bio' => 't', 'city' => 'k', 'specializations' => 'k', 'rating' => 'f', 'is_featured' => 'b', 'is_online' => 'b', 'slug' => 'k'],
-            self::IDX_QUESTIONS => ['title' => 't', 'body' => 't', 'category' => 'k', 'status' => 'k', 'created_at' => 'd'],
+            self::IDX_QUESTIONS => ['title' => 't', 'body' => 't', 'category' => 'k', 'type' => 'k', 'status' => 'k', 'created_at' => 'd'],
             self::IDX_ARTICLES => ['title' => 't', 'body' => 't', 'excerpt' => 't', 'type' => 'k', 'slug' => 'k', 'published_at' => 'd'],
         ] as $index => $fields) {
-            if ($this->client->indices()->exists(['index' => $index])) {
-                continue;
-            }
             $props = [];
             foreach ($fields as $field => $t) {
                 $props[$field] = match ($t) {
@@ -49,6 +46,15 @@ final readonly class SearchIndexer
                     'b' => ['type' => 'boolean'],
                     'd' => ['type' => 'date'],
                 };
+            }
+            if ($this->client->indices()->exists(['index' => $index])) {
+                if ($index === self::IDX_QUESTIONS) {
+                    $this->client->indices()->putMapping([
+                        'index' => $index,
+                        'body' => ['properties' => ['type' => ['type' => 'keyword']]],
+                    ]);
+                }
+                continue;
             }
             $this->client->indices()->create([
                 'index' => $index,
@@ -77,6 +83,16 @@ final readonly class SearchIndexer
 
     public function indexQuestion(Question $q): void
     {
+        if (!$q->isPubliclyVisible()) {
+            // Delete stale copies too; skipping alone leaves old private text searchable.
+            $this->client->delete([
+                'index' => self::IDX_QUESTIONS,
+                'id' => $q->getId()->toRfc4122(),
+                'client' => ['ignore' => [404]],
+                'refresh' => 'wait_for',
+            ]);
+            return;
+        }
         $this->client->index([
             'index' => self::IDX_QUESTIONS,
             'id' => $q->getId()->toRfc4122(),
@@ -84,6 +100,7 @@ final readonly class SearchIndexer
                 'title' => $q->getTitle(),
                 'body' => $q->getBody(),
                 'category' => $q->getCategory()->getSlug(),
+                'type' => $q->getType(),
                 'status' => $q->getStatus(),
                 'created_at' => $q->getCreatedAt()->format(DATE_ATOM),
             ],
@@ -106,6 +123,27 @@ final readonly class SearchIndexer
         ]);
     }
 
+    /** @return list<array<string, mixed>> */
+    private static function publicQuestionFilters(): array
+    {
+        return [
+            ['term' => ['type' => Question::TYPE_PUBLIC]],
+            ['terms' => ['status' => Question::PUBLIC_STATUSES]],
+        ];
+    }
+
+    /** Remove legacy records without visibility metadata as well as non-public ones. */
+    public function purgeNonPublicQuestions(): void
+    {
+        $this->client->deleteByQuery([
+            'index' => self::IDX_QUESTIONS,
+            'refresh' => true,
+            'body' => ['query' => ['bool' => [
+                'must_not' => [['bool' => ['filter' => self::publicQuestionFilters()]]],
+            ]]],
+        ]);
+    }
+
     /** Глобальный поиск по всем индексам (SRCH-01).
      * @return array<string, mixed>
      */
@@ -124,10 +162,21 @@ final readonly class SearchIndexer
                 'from' => ($page - 1) * $perPage,
                 'size' => $perPage,
                 'query' => [
-                    'multi_match' => [
-                        'query' => $query,
-                        'fields' => ['title^3', 'name^3', 'excerpt^2', 'bio', 'body'],
-                        'fuzziness' => 'AUTO', // SRCH-04
+                    'bool' => [
+                        'filter' => [[
+                            'bool' => [
+                                'should' => [
+                                    ['bool' => ['must_not' => [['term' => ['_index' => self::IDX_QUESTIONS]]]]],
+                                    ['bool' => ['filter' => self::publicQuestionFilters()]],
+                                ],
+                                'minimum_should_match' => 1,
+                            ],
+                        ]],
+                        'must' => [['multi_match' => [
+                            'query' => $query,
+                            'fields' => ['title^3', 'name^3', 'excerpt^2', 'bio', 'body'],
+                            'fuzziness' => 'AUTO', // SRCH-04
+                        ]]],
                     ],
                 ],
             ],
